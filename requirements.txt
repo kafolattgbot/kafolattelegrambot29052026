@@ -1,0 +1,10 @@
+aiogram==3.4.1
+python-dotenv
+aiohttp
+qrcode
+reportlab
+Pillow
+requests
+aioftp
+pymysql
+cryptography
