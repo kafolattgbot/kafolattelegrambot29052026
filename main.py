@@ -1341,6 +1341,10 @@ async def check_dealer_status(user_id: int, phone: str, force_check: bool = Fals
     return result
 
 def is_dealer_active(user_id: int) -> bool:
+    # ✅ Супер-админ ВСЕГДА активен
+    if user_id == SUPER_ADMIN_ID:
+        return True
+
     # если ещё не проверяли дилера — считаем активным
     if user_id not in dealer_cache:
         return True
@@ -1349,6 +1353,42 @@ def is_dealer_active(user_id: int) -> bool:
 
 
 def get_main_menu_keyboard(user_id: int, lang: str):
+    # ✅ Супер-админ и админы ВСЕГДА имеют доступ к заказам
+    if user_id in ALL_ADMIN_IDS:
+        order_text = "🛒 Сделать заказ" if lang == "ru" else "🛒 Buyurtma berish"
+
+        buttons = [
+            [
+                KeyboardButton(
+                    text=order_text,
+                    web_app=WebAppInfo(url=WEBAPP_URL)
+                )
+            ]
+        ]
+
+        # ✅ Кнопка анализа только для супер-админа
+        if user_id == SUPER_ADMIN_ID:
+            buttons.append([
+                KeyboardButton(
+                    text="📊 Анализ" if lang == "ru" else "📊 Tahlil",
+                    web_app=WebAppInfo(url=URL_ANALYSIS)
+                )
+            ])
+
+        return ReplyKeyboardMarkup(
+            keyboard=buttons + [
+                [
+                    KeyboardButton(
+                        text="📋 Мои заказы" if lang == "ru" else "📋 Mening buyurtmalarim"
+                    ),
+                    KeyboardButton(
+                        text="⚙️ Настройки" if lang == "ru" else "⚙️ Sozlamalar"
+                    )
+                ]
+            ],
+            resize_keyboard=True
+        )
+
     # ❌ дилер не активен — показываем каталог для просмотра (без "Мои заказы")
     if not is_dealer_active(user_id):
         catalogue_text = "📖 Каталог" if lang == "ru" else "📖 Katalog"
@@ -4242,4 +4282,3 @@ if __name__ == "__main__":
         logger.info("Bot stopped by user")
     except Exception as e:
         logger.exception(f"Fatal error: {e}")
-
