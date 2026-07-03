@@ -8,6 +8,7 @@ REQUIRED_ENV = [
     "SUPER_ADMIN_ID",
     "ADMIN_CHAT_ID",
     "WEBAPP_URL",
+    "WEBAPP_CATALOGUE_URL",  # ✅ НОВОЕ: URL каталога для просмотра (не-дилеры)
     "HOSTING_FTP_HOST",
     "HOSTING_FTP_USER",
     "HOSTING_FTP_PASS",
@@ -480,6 +481,7 @@ API_TOKEN = os.getenv("API_TOKEN")
 ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID"))
 ADMIN_NAME = os.getenv("ADMIN_NAME", "Administrator")
 WEBAPP_URL = os.getenv("WEBAPP_URL")
+WEBAPP_CATALOGUE_URL = os.getenv("WEBAPP_CATALOGUE_URL")  # ✅ URL каталога для не-дилеров
 URL_ANALYSIS = os.getenv("URL_ANALYSIS")
 
 # Файлы
@@ -1347,14 +1349,28 @@ def is_dealer_active(user_id: int) -> bool:
 
 
 def get_main_menu_keyboard(user_id: int, lang: str):
-    # ❌ дилер не активен — без WebApp
+    # ❌ дилер не активен — показываем каталог для просмотра (без "Мои заказы")
     if not is_dealer_active(user_id):
+        catalogue_text = "📖 Каталог" if lang == "ru" else "📖 Katalog"
+
         return ReplyKeyboardMarkup(
-            keyboard=[[KeyboardButton(text="⚙️ Настройки")]],
+            keyboard=[
+                [
+                    KeyboardButton(
+                        text=catalogue_text,
+                        web_app=WebAppInfo(url=WEBAPP_CATALOGUE_URL)
+                    )
+                ],
+                [
+                    KeyboardButton(
+                        text="⚙️ Настройки" if lang == "ru" else "⚙️ Sozlamalar"
+                    )
+                ]
+            ],
             resize_keyboard=True
         )
 
-    # ⏳ проверка таймера WebApp
+    # ⏳ проверка таймера WebApp для активных дилеров
     if is_webapp_button_active(user_id):
 
         order_text = "🛒 Сделать заказ" if lang == "ru" else "🛒 Buyurtma berish"
@@ -2286,20 +2302,36 @@ async def cmd_start(message: Message, state: FSMContext):
     )
 
     # ===== 3. ТЕКСТ ПРОФИЛЯ =====
-    if lang == "ru":
-        text = (
-            f"Привет {profile['full_name']}!\n\n"
-            f"Для формление заказа\n"
-            f"Нажмите «🛒 Сделать заказ»\n"
+    if dealer_status.get("is_active"):
+        # Активный дилер - показываем текст для заказа
+        if lang == "ru":
+            text = (
+                f"Привет {profile['full_name']}!\n\n"
+                f"Для формление заказа\n"
+                f"Нажмите «🛒 Сделать заказ»\n"
 
-        )
+            )
+        else:
+            text = (
+                f"Salom {profile['full_name']}!\n\n"
+                f"Buyurtma berish uchun \n"
+                f"«🛒 Buyurtma berish» tugmasini bosing\n"
+
+            )
     else:
-        text = (
-            f"Salom {profile['full_name']}!\n\n"
-            f"Buyurtma berish uchun \n"
-            f"«🛒 Buyurtma berish» tugmasini bosing\n"
-
-        )
+        # Не-дилер или неактивный дилер - показываем текст для каталога
+        if lang == "ru":
+            text = (
+                f"Привет {profile['full_name']}!\n\n"
+                f"Вы можете просмотреть наш каталог товаров.\n"
+                f"Нажмите «📖 Каталог» для просмотра.\n"
+            )
+        else:
+            text = (
+                f"Salom {profile['full_name']}!\n\n"
+                f"Siz bizning mahsulotlar katalogini ko'rishingiz mumkin.\n"
+                f"Ko'rish uchun «📖 Katalog» tugmasini bosing.\n"
+            )
 
     # ===== 4. ЕСЛИ НЕ АКТИВНЫЙ ДИЛЕР — ДОП. ПРЕДУПРЕЖДЕНИЕ =====
     if not dealer_status.get("is_active"):
@@ -2307,29 +2339,29 @@ async def cmd_start(message: Message, state: FSMContext):
             # Есть в списке, но статус не active
             if lang == "ru":
                 text += (
-                    "\n\n⚠️ ВНИМАНИЕ!\n"
+                    "\n⚠️ ВНИМАНИЕ!\n"
                     f"Ваш статус: {dealer_status.get('status', 'неизвестно')}\n"
-                    "Функция создания заказов временно недоступна."
+                    "Функция создания заказов временно недоступна.\n"
+                    "Вы можете просматривать каталог."
                 )
             else:
                 text += (
-                    "\n\n⚠️ DIQQAT!\n"
+                    "\n⚠️ DIQQAT!\n"
                     f"Sizning holatingiz: {dealer_status.get('status', 'nomaʼlum')}\n"
-                    "Buyurtma yaratish funksiyasi vaqtincha mavjud emas."
+                    "Buyurtma yaratish funksiyasi vaqtincha mavjud emas.\n"
+                    "Siz katalogni ko'rishingiz mumkin."
                 )
         else:
             # Вообще не дилер
             if lang == "ru":
                 text += (
-                    "\n\n⚠️ ВНИМАНИЕ!\n"
-                    "Вы не найдены в списке дилеров.\n"
-                    "Функция создания заказов недоступна."
+                    "\n💡 Для оформления заказов необходимо стать дилером.\n"
+                    "Свяжитесь с администратором для получения доступа."
                 )
             else:
                 text += (
-                    "\n\n⚠️ DIQQAT!\n"
-                    "Siz dilerlar ro'yxatida topilmadingiz.\n"
-                    "Buyurtma yaratish funksiyasi mavjud emas."
+                    "\n💡 Buyurtma berish uchun diler bo'lish kerak.\n"
+                    "Kirish huquqini olish uchun administrator bilan bog'laning."
                 )
 
     # ===== 5. КЛАВИАТУРА В ЗАВИСИМОСТИ ОТ СТАТУСА =====
@@ -4210,3 +4242,4 @@ if __name__ == "__main__":
         logger.info("Bot stopped by user")
     except Exception as e:
         logger.exception(f"Fatal error: {e}")
+
