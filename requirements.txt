@@ -1,10 +1,11 @@
-aiogram==3.4.1
-python-dotenv
-aiohttp
-qrcode
-reportlab
-Pillow
-requests
-aioftp
-pymysql
-cryptography
+# Минимальные версии (для совместимости)
+aiogram>=3.4.1
+python-dotenv>=1.0.0
+aiohttp>=3.9.0
+PyMySQL>=1.1.0
+cryptography>=42.0.0
+reportlab>=4.0.0
+Pillow>=10.0.0
+qrcode[pil]>=7.4.0
+aioftp>=0.22.0
+requests>=2.31.0
