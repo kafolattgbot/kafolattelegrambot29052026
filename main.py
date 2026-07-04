@@ -2354,8 +2354,8 @@ async def cmd_start(message: Message, state: FSMContext):
                 text += (
                     "\n\n⚠️ DIQQAT!\n"
                     "Siz dilerlar ro'yxatida topilmadingiz.\n"
-                    "Buyurtma yaratish funksiyasi mavjud emas.\n"
-                    "Katalog tugmasini bosib, bizning mahsulotlarimiz bilan tanishishingiz mumkin."
+                    "Buyurtma yaratish funksiyasi mavjud emas.\n\n "
+                    "📖 Katalog tugmasini bosib, bizning mahsulotlarimiz bilan tanishishingiz mumkin."
                 )
 
     # ===== 5. КЛАВИАТУРА В ЗАВИСИМОСТИ ОТ СТАТУСА =====
