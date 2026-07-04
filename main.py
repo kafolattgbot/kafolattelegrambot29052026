@@ -8,6 +8,7 @@ REQUIRED_ENV = [
     "SUPER_ADMIN_ID",
     "ADMIN_CHAT_ID",
     "WEBAPP_URL",
+    "WEBAPP_CATALOGUE_URL",
     "HOSTING_FTP_HOST",
     "HOSTING_FTP_USER",
     "HOSTING_FTP_PASS",
@@ -480,6 +481,7 @@ API_TOKEN = os.getenv("API_TOKEN")
 ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID"))
 ADMIN_NAME = os.getenv("ADMIN_NAME", "Administrator")
 WEBAPP_URL = os.getenv("WEBAPP_URL")
+WEBAPP_CATALOGUE_URL = os.getenv("WEBAPP_CATALOGUE_URL")
 URL_ANALYSIS = os.getenv("URL_ANALYSIS")
 
 # Файлы
@@ -1345,12 +1347,36 @@ def is_dealer_active(user_id: int) -> bool:
     return dealer_cache[user_id].get("is_active", True)
 
 
+def is_known_dealer(user_id: int) -> bool:
+    # если ещё не проверяли дилера — не меняем прежнее поведение меню
+    if user_id not in dealer_cache:
+        return True
+    return dealer_cache[user_id].get("is_dealer", False)
+
+
 
 def get_main_menu_keyboard(user_id: int, lang: str):
+    if not is_known_dealer(user_id):
+        catalogue_text = "📖 Каталог" if lang == "ru" else "📖 Katalog"
+        settings_text = "⚙️ Настройки" if lang == "ru" else "⚙️ Sozlamalar"
+
+        return ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    KeyboardButton(
+                        text=catalogue_text,
+                        web_app=WebAppInfo(url=WEBAPP_CATALOGUE_URL)
+                    )
+                ],
+                [KeyboardButton(text=settings_text)]
+            ],
+            resize_keyboard=True
+        )
+
     # ❌ дилер не активен — без WebApp
     if not is_dealer_active(user_id):
         return ReplyKeyboardMarkup(
-            keyboard=[[KeyboardButton(text="⚙️ Настройки")]],
+            keyboard=[[KeyboardButton(text="⚙️ Настройки" if lang == "ru" else "⚙️ Sozlamalar")]],
             resize_keyboard=True
         )
 
@@ -2289,15 +2315,13 @@ async def cmd_start(message: Message, state: FSMContext):
     if lang == "ru":
         text = (
             f"Привет {profile['full_name']}!\n\n"
-            f"Для формление заказа\n"
-            f"Нажмите «🛒 Сделать заказ»\n"
+            f"Для оформления заказа нажмите «🛒 Сделать заказ»\n"
 
         )
     else:
         text = (
             f"Salom {profile['full_name']}!\n\n"
-            f"Buyurtma berish uchun \n"
-            f"«🛒 Buyurtma berish» tugmasini bosing\n"
+            f"Buyurtma berish uchun «🛒 Buyurtma berish» tugmasini bosing\n"
 
         )
 
@@ -2323,13 +2347,15 @@ async def cmd_start(message: Message, state: FSMContext):
                 text += (
                     "\n\n⚠️ ВНИМАНИЕ!\n"
                     "Вы не найдены в списке дилеров.\n"
-                    "Функция создания заказов недоступна."
+                    "Функция создания заказов недоступна.\n"
+                    "Нажав кнопку «📖 Каталог», вы можете ознакомиться с нашей продукцией."
                 )
             else:
                 text += (
                     "\n\n⚠️ DIQQAT!\n"
                     "Siz dilerlar ro'yxatida topilmadingiz.\n"
-                    "Buyurtma yaratish funksiyasi mavjud emas."
+                    "Buyurtma yaratish funksiyasi mavjud emas.\n"
+                    "Katalog tugmasini bosib, bizning mahsulotlarimiz bilan tanishishingiz mumkin."
                 )
 
     # ===== 5. КЛАВИАТУРА В ЗАВИСИМОСТИ ОТ СТАТУСА =====
@@ -2577,15 +2603,15 @@ async def process_full_name(message: Message, state: FSMContext):
                 text += (
                     "\n\n⚠️ ВНИМАНИЕ!\n"
                     "Вы не найдены в списке дилеров.\n"
-                    "Функция создания заказов недоступна.\n\n"
-                    "Для получения доступа свяжитесь с администратором."
+                    "Функция создания заказов недоступна.\n"
+                    "Нажав кнопку «📖 Каталог», вы можете ознакомиться с нашей продукцией."
                 )
             else:
                 text += (
                     "\n\n⚠️ DIQQAT!\n"
                     "Siz dilerlar roʻyxatida topilmadingiz.\n"
-                    "Buyurtma yaratish funksiyasi mavjud emas.\n\n"
-                    "Administrator bilan bogʻlaning."
+                    "Buyurtma yaratish funksiyasi mavjud emas.\n"
+                    "Katalog tugmasini bosib, bizning mahsulotlarimiz bilan tanishishingiz mumkin."
                 )
 
     # 🎛 Клавиатура В ЗАВИСИМОСТИ ОТ СТАТУСА
