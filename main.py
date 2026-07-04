@@ -2315,13 +2315,15 @@ async def cmd_start(message: Message, state: FSMContext):
     if lang == "ru":
         text = (
             f"Привет {profile['full_name']}!\n\n"
-            f"Для оформления заказа нажмите «🛒 Сделать заказ»\n"
+            f"Для оформления заказа нажмите\n"
+            f"«🛒 Сделать заказ»\n"
 
         )
     else:
         text = (
             f"Salom {profile['full_name']}!\n\n"
             f"Buyurtma berish uchun «🛒 Buyurtma berish» tugmasini bosing\n"
+            f"«🛒 Buyurtma berish» tugmasini bosing\n"
 
         )
 
