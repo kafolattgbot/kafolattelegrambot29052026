@@ -2322,7 +2322,7 @@ async def cmd_start(message: Message, state: FSMContext):
     else:
         text = (
             f"Salom {profile['full_name']}!\n\n"
-            f"Buyurtma berish uchun «🛒 Buyurtma berish» tugmasini bosing\n"
+            f"Buyurtma berish uchun\n"
             f"«🛒 Buyurtma berish» tugmasini bosing\n"
 
         )
